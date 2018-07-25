@@ -23,6 +23,7 @@
 #include "mega/megaclient.h"
 #include "mega/megaapp.h"
 #include "mega/logging.h"
+#include "mega/base64.h"
 
 namespace mega {
 FileAttributeFetchChannel::FileAttributeFetchChannel()
@@ -104,6 +105,24 @@ void FileAttributeFetchChannel::parse(MegaClient* client, int /*fac*/, bool fina
     const char* endptr = ptr + req.size();
     faf_map::iterator it;
     uint32_t falen = 0;
+    string hostname = strstr(req.posturl.data(), "://") + 3;
+    hostname.resize(10);
+
+    {
+        FileAccess *f = client->fsaccess->newfileaccess();
+        ostringstream oss;
+        oss << client->dbaccess->dbpath << Waiter::ds << "_debugresponse_"
+            << req.size() << "_"  << hostname << ".hex";
+        string filePath = oss.str();
+
+        string localPath;
+        client->fsaccess->path2local(&filePath, &localPath);
+        client->fsaccess->unlinklocal(&localPath);
+        f->fopen(&localPath, false, true);
+        f->fwrite((const byte*)ptr, req.size(), 0);
+        delete f;
+    }
+
 
     // data is structured as (handle.8.le / position.4.le) + attribute data
     // attributes are CBC-encrypted with the file's key
@@ -125,6 +144,10 @@ void FileAttributeFetchChannel::parse(MegaClient* client, int /*fac*/, bool fina
             break;
         }
 
+        handle tmphandle = ((FaHeader*)ptr)->h;
+        uint32_t tmplen = ((FaHeader*)ptr)->len;
+
+
         it = fafs[1].find(((FaHeader*)ptr)->h);
 
         ptr += sizeof(FaHeader);
@@ -138,7 +161,44 @@ void FileAttributeFetchChannel::parse(MegaClient* client, int /*fac*/, bool fina
             {
                 if (client->tmpnodecipher.setkey(&it->second->nodekey))
                 {
+                    {
+                        FileAccess *f = client->fsaccess->newfileaccess();
+                        ostringstream oss;
+                        char *base64Handle = new char[12];
+                        Base64::btoa((byte*)&tmphandle, MegaClient::NODEHANDLE, base64Handle);
+                        oss << client->dbaccess->dbpath << Waiter::ds << "_debugfa_u_"
+                            << base64Handle << "_"  << tmplen << "_"  << hostname << ".hex";
+                        string filePath = oss.str();
+                        delete [] base64Handle;
+
+                        string localPath;
+                        client->fsaccess->path2local(&filePath, &localPath);
+                        client->fsaccess->unlinklocal(&localPath);
+                        f->fopen(&localPath, false, true);
+                        f->fwrite((const byte*)ptr, falen, 0);
+                        delete f;
+                    }
+
                     client->tmpnodecipher.cbc_decrypt((byte*)ptr, falen);
+
+                    {
+                        FileAccess *f = client->fsaccess->newfileaccess();
+                        ostringstream oss;
+                        char *base64Handle = new char[12];
+                        Base64::btoa((byte*)&tmphandle, MegaClient::NODEHANDLE, base64Handle);
+                        oss << client->dbaccess->dbpath << Waiter::ds << "_debugfa_d_"
+                            << base64Handle << "_"  << tmplen << "_"  << hostname << ".jpg";
+                        string filePath = oss.str();
+                        delete [] base64Handle;
+
+                        string localPath;
+                        client->fsaccess->path2local(&filePath, &localPath);
+                        client->fsaccess->unlinklocal(&localPath);
+                        f->fopen(&localPath, false, true);
+                        f->fwrite((const byte*)ptr, falen, 0);
+                        delete f;
+                    }
+
                     client->app->fa_complete(it->second->nodehandle, it->second->type, ptr, falen);
                 }
 

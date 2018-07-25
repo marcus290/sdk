@@ -1321,9 +1321,9 @@ void MegaClient::exec()
 
                         if (fc->inbytes != fc->req.in.size())
                         {
-                            httpio->lock();
+                            /*httpio->lock();
                             fc->parse(this, cit->first, false);
-                            httpio->unlock();
+                            httpio->unlock();*/
 
                             fc->timeout.backoff(100);
 
