@@ -348,7 +348,7 @@ void CommandPutFile::procresult()
     {
         if (!canceled)
         {
-            tslot->transfer->failed((error)client->json.getint());
+            tslot->transfer().failed((error)client->json.getint());
         }
        
         return;
@@ -369,14 +369,14 @@ void CommandPutFile::procresult()
 
                 if (tempurls.size() == 1)
                 {
-                    tslot->transfer->tempurls = tempurls;
-                    tslot->transferbuf.setIsRaid(tslot->transfer, tempurls, tslot->transfer->pos, tslot->maxRequestSize);
+                    tslot->transfer().tempurls = tempurls;
+                    tslot->transferbuf.setIsRaid(&tslot->transfer(), tempurls, tslot->transfer().pos, tslot->maxRequestSize);
                     tslot->starttime = tslot->lastdata = client->waiter->ds;
                     return tslot->progress();
                 }
                 else
                 {
-                    return tslot->transfer->failed(API_EINTERNAL);
+                    return tslot->transfer().failed(API_EINTERNAL);
                 }
 
             default:
@@ -384,7 +384,7 @@ void CommandPutFile::procresult()
                 {
                     if (!canceled)
                     {
-                        tslot->transfer->failed(API_EINTERNAL);
+                        tslot->transfer().failed(API_EINTERNAL);
                     }
 
                     return;
@@ -598,7 +598,7 @@ void CommandGetFile::procresult()
 
         if (tslot)
         {
-            return tslot->transfer->failed(e);
+            return tslot->transfer().failed(e);
         }
 
         return client->app->checkfile_result(ph, e);
@@ -705,7 +705,7 @@ void CommandGetFile::procresult()
 
                     if (tslot)
                     {
-                        return tslot->transfer->failed(e);
+                        return tslot->transfer().failed(e);
                     }
 
                     return client->app->checkfile_result(ph, e);
@@ -718,7 +718,7 @@ void CommandGetFile::procresult()
 
                     key.setkey(filekey, FILENODE);
 
-                    if ((buf = Node::decryptattr(tslot ? tslot->transfer->transfercipher() : &key,
+                    if ((buf = Node::decryptattr(tslot ? tslot->transfer().transfercipher() : &key,
                                                  at, int(eos ? eos - at : strlen(at)))))
                     {
                         JSON json;
@@ -736,7 +736,7 @@ void CommandGetFile::procresult()
 
                                         if (tslot)
                                         {
-                                            return tslot->transfer->failed(API_EINTERNAL);
+                                            return tslot->transfer().failed(API_EINTERNAL);
                                         }
 
                                         return client->app->checkfile_result(ph, API_EINTERNAL);
@@ -750,7 +750,7 @@ void CommandGetFile::procresult()
 
                                         if (tslot)
                                         {
-                                            return tslot->transfer->failed(API_EINTERNAL);
+                                            return tslot->transfer().failed(API_EINTERNAL);
                                         }
 
                                         return client->app->checkfile_result(ph, API_EINTERNAL);
@@ -762,10 +762,10 @@ void CommandGetFile::procresult()
 
                                     if (tslot)
                                     {
-                                        if (s >= 0 && s != tslot->transfer->size)
+                                        if (s >= 0 && s != tslot->transfer().size)
                                         {
-                                            tslot->transfer->size = s;
-                                            for (file_list::iterator it = tslot->transfer->files.begin(); it != tslot->transfer->files.end(); it++)
+                                            tslot->transfer().size = s;
+                                            for (file_list::iterator it = tslot->transfer().files.begin(); it != tslot->transfer().files.end(); it++)
                                             {
                                                 (*it)->size = s;
                                             }
@@ -790,8 +790,8 @@ void CommandGetFile::procresult()
 
                                         if ((tempurls.size() == 1 || tempurls.size() == RAIDPARTS) && s >= 0)
                                         {
-                                            tslot->transfer->tempurls = tempurls;
-                                            tslot->transferbuf.setIsRaid(tslot->transfer, tempurls, tslot->transfer->pos, tslot->maxRequestSize);
+                                            tslot->transfer().tempurls = tempurls;
+                                            tslot->transferbuf.setIsRaid(&tslot->transfer(), tempurls, tslot->transfer().pos, tslot->maxRequestSize);
                                             return tslot->progress();
                                         }
 
@@ -801,7 +801,7 @@ void CommandGetFile::procresult()
                                             tl = MegaClient::DEFAULT_BW_OVERQUOTA_BACKOFF_SECS;
                                         }
 
-                                        return tslot->transfer->failed(e, e == API_EOVERQUOTA ? tl * 10 : 0);
+                                        return tslot->transfer().failed(e, e == API_EOVERQUOTA ? tl * 10 : 0);
                                     }
                                     else
                                     {
@@ -818,7 +818,7 @@ void CommandGetFile::procresult()
 
                                         if (tslot)
                                         {
-                                            return tslot->transfer->failed(API_EINTERNAL);
+                                            return tslot->transfer().failed(API_EINTERNAL);
                                         }
                                         else
                                         {
@@ -836,7 +836,7 @@ void CommandGetFile::procresult()
 
                     if (tslot)
                     {
-                        return tslot->transfer->failed(API_EKEY);
+                        return tslot->transfer().failed(API_EKEY);
                     }
                     else
                     {
@@ -849,7 +849,7 @@ void CommandGetFile::procresult()
                 {
                     if (tslot)
                     {
-                        return tslot->transfer->failed(API_EINTERNAL);
+                        return tslot->transfer().failed(API_EINTERNAL);
                     }
                     else
                     {

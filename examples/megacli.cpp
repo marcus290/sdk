@@ -7276,7 +7276,7 @@ void megacli()
                 {
                     if ((*it)->fa)
                     {
-                        xferrate[(*it)->transfer->type]
+                        xferrate[(*it)->transfer().type]
                             += unsigned( (*it)->progressreported * 10 / (1024 * (Waiter::ds - (*it)->starttime + 1)) );
                     }
                 }

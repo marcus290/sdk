@@ -19,8 +19,7 @@
  * program.
  */
 
-#ifndef MEGA_TRANSFERSLOT_H
-#define MEGA_TRANSFERSLOT_H 1
+#pragma once
 
 #include "http.h"
 #include "node.h"
@@ -28,30 +27,46 @@
 #include "raid.h"
 
 namespace mega {
-// active transfer
-struct MEGA_API TransferSlot
-{
-    // link to related transfer (never NULL)
-    struct Transfer* transfer;
 
-    // associated source/destination file
+struct Transfer;
+
+/// active transfer
+class MEGA_API TransferSlot final
+{
+public:
+
+    explicit TransferSlot(Transfer& transfer);
+    ~TransferSlot();
+
+    MEGA_DISABLE_COPY_MOVE(TransferSlot)
+
+    /// link to related transfer
+    const Transfer& transfer() const;
+    Transfer& transfer();
+
+    /// handle I/O for this slot
+    void doio(MegaClient*);
+
+    /// helper for doio to delay connection creation until we know if it's raid or non-raid
+    bool createconnectionsonce();
+
+    /// disconnect and reconnect all open connections for this transfer
+    void disconnect();
+
+    /// indicate progress
+    void progress();
+
+    /// update the contiguous progress
+    void updatecontiguousprogress();
+
+    /// compute the meta MAC based on the chunk MACs
+    int64_t macsmac(chunkmac_map*);
+
+    /// associated source/destination file
     FileAccess* fa;
 
-    // command in flight to obtain temporary URL
+    /// command in flight to obtain temporary URL
     Command* pendingcmd;
-
-    // transfer attempts are considered failed after XFERTIMEOUT seconds
-    // without data flow
-    static const dstime XFERTIMEOUT;
-
-    // max time without progress callbacks
-    static const dstime PROGRESSTIMEOUT;
-
-    // max request size for downloads and uploads
-    static const m_off_t MAX_REQ_SIZE;
-
-    // max allowed difference between the next chunk and the first unfinished chunk
-    static const m_off_t MAX_UPLOAD_GAP;
 
     bool delayedchunk;
 
@@ -68,64 +83,43 @@ struct MEGA_API TransferSlot
     SpeedController speedController;
     m_off_t speed, meanSpeed;
 
-    // number of consecutive errors
+    /// number of consecutive errors
     unsigned errorcount;
 
-    // last error
+    /// last error
     error lasterror;
 
-    // file attribute string
+    /// file attribute string
     string fileattrstring;
 
-    // file attributes mutable
+    /// file attributes mutable
     int fileattrsmutable;
 
-    // maximum number of parallel connections and connection array
+    /// maximum number of parallel connections and connection array
     int connections;
     HttpReqXfer** reqs;
 
-    // Manage download input buffers and file output buffers for file download.  Raid-aware, and automatically performs decryption and mac.
+    /// Manage download input buffers and file output buffers for file download.  Raid-aware, and automatically performs decryption and mac.
     TransferBufferManager transferbuf;
 
-    // async IO operations
+    /// async IO operations
     AsyncIOContext** asyncIO;
 
-    // handle I/O for this slot
-    void doio(MegaClient*);
-
-    // helper for doio to delay connection creation until we know if it's raid or non-raid
-    bool createconnectionsonce();
-
-    // disconnect and reconnect all open connections for this transfer
-    void disconnect();
-
-    // indicate progress
-    void progress();
-
-    // update the contiguous progress
-    void updatecontiguousprogress();
-
-    // compute the meta MAC based on the chunk MACs
-    int64_t macsmac(chunkmac_map*);
-
-    // tslots list position
+    /// tslots list position
     transferslot_list::iterator slots_it;
 
-    // slot operation retry timer
+    /// slot operation retry timer
     bool retrying;
     BackoffTimer retrybt;
 
-    // transfer failure flag
+    /// transfer failure flag
     bool failure;
-    
-    TransferSlot(Transfer*);
-    ~TransferSlot();
 
-protected:
+private:
     void toggleport(HttpReqXfer* req);
     bool tryRaidRecoveryFromHttpGetError(unsigned i);
 
+    Transfer& m_transfer; ///< link to related transfer
 };
-} // namespace
 
-#endif
+} // mega

@@ -2063,7 +2063,7 @@ void MegaClient::exec()
 
             slotit++;
 
-            if (!xferpaused[(*it)->transfer->type] && (!(*it)->retrying || (*it)->retrybt.armed()))
+            if (!xferpaused[(*it)->transfer().type] && (!(*it)->retrying || (*it)->retrybt.armed()))
             {
                 (*it)->doio(this);
             }
@@ -3138,7 +3138,7 @@ bool MegaClient::dispatch(direction_t d)
             if (!nexttransfer->slot)
             {
                 // allocate transfer slot
-                ts = new TransferSlot(nexttransfer);
+                ts = new TransferSlot(*nexttransfer);
             }
             else
             {
@@ -4579,9 +4579,9 @@ bool MegaClient::moretransfers(direction_t d)
     // direction
     for (transferslot_list::iterator it = tslots.begin(); it != tslots.end(); it++)
     {
-        if ((*it)->transfer->type == d)
+        if ((*it)->transfer().type == d)
         {
-            r += (*it)->transfer->size - (*it)->progressreported;
+            r += (*it)->transfer().size - (*it)->progressreported;
             total++;
         }
     }
@@ -11063,9 +11063,9 @@ void MegaClient::updateputs()
 {
     for (transferslot_list::iterator it = tslots.begin(); it != tslots.end(); it++)
     {
-        if ((*it)->transfer->type == PUT && (*it)->transfer->files.size())
+        if ((*it)->transfer().type == PUT && (*it)->transfer().files.size())
         {
-            (*it)->transfer->files.front()->prepare();
+            (*it)->transfer().files.front()->prepare();
         }
     }
 }
@@ -12899,7 +12899,7 @@ void MegaClient::pausexfers(direction_t d, bool pause, bool hard)
 
         for (transferslot_list::iterator it = tslots.begin(); it != tslots.end(); )
         {
-            if ((*it)->transfer->type == d)
+            if ((*it)->transfer().type == d)
             {
                 if (pause)
                 {
@@ -12937,12 +12937,12 @@ void MegaClient::setmaxconnections(direction_t d, int num)
             for (transferslot_list::iterator it = tslots.begin(); it != tslots.end(); )
             {
                 TransferSlot *slot = *it++;
-                if (slot->transfer->type == d)
+                if (slot->transfer().type == d)
                 {
-                    slot->transfer->state = TRANSFERSTATE_QUEUED;
-                    if (slot->transfer->client->ststatus != STORAGE_RED || slot->transfer->type == GET)
+                    slot->transfer().state = TRANSFERSTATE_QUEUED;
+                    if (slot->transfer().client->ststatus != STORAGE_RED || slot->transfer().type == GET)
                     {
-                        slot->transfer->bt.arm();
+                        slot->transfer().bt.arm();
                     }
                     delete slot;
                 }

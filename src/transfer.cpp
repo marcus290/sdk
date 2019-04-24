@@ -1913,7 +1913,7 @@ void TransferList::prepareIncreasePriority(Transfer *transfer, transfer_list::it
         Transfer *lastActiveTransfer = NULL;
         for (transferslot_list::iterator it = client->tslots.begin(); it != client->tslots.end(); it++)
         {
-            Transfer *t = (*it)->transfer;
+            Transfer *t = &(*it)->transfer();
             if (t && t->type == transfer->type && t->slot
                     && t->state == TRANSFERSTATE_ACTIVE
                     && t->priority > transfer->priority
