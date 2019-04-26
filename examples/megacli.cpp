@@ -2187,6 +2187,7 @@ void getDepthFirstFileHandles(Node* n, deque<handle>& q)
     }
 }
 
+#ifdef HAVE_AUTOCOMPLETE
 void exec_find(autocomplete::ACState& s)
 {
     if (s.words[1].s == "raided")
@@ -2211,6 +2212,7 @@ void exec_find(autocomplete::ACState& s)
         }
     }
 }
+#endif
 
 bool typematchesnodetype(nodetype_t pathtype, nodetype_t nodetype)
 {
@@ -2307,7 +2309,7 @@ fs::path pathFromLocalPath(const string& s, bool mustexist)
     }
     return p;
 }
-
+#ifdef HAVE_AUTOCOMPLETE
 void exec_treecompare(autocomplete::ACState& s)
 {
     fs::path p = pathFromLocalPath(s.words[1].s, true);
@@ -2322,6 +2324,8 @@ void exec_querytransferquota(autocomplete::ACState& ac)
 {
     client->querytransferquota(atoll(ac.words[1].s.c_str()));
 }
+#endif
+
 #endif // __cplusplus >= 201100L
 
 void DemoApp::querytransferquota_result(int n)
