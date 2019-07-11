@@ -1612,7 +1612,29 @@ void TreeProcListOutShares::proc(MegaClient*, Node* n)
 
 bool handles_on = false;
 
-static void dumptree(Node* n, bool recurse, int depth = 0, const char* title = NULL)
+m_off_t get_size(Node* n)
+{
+    if (n->type == FILENODE)
+    {
+        return n->size;
+    }
+    else
+    {
+        m_off_t total_size = 0;
+        for (node_list::iterator it = n->children.begin(); it != n->children.end(); it++)
+        {
+            total_size += get_size(*it);
+        }
+        return total_size;
+    }
+}
+
+bool descending_size(Node* n, Node* m)
+{
+    return get_size(n) > get_size(m);
+}
+
+static void dumptree(Node* n, bool recurse, bool ordering, int depth = 0, const char* title = NULL)
 {
     if (depth)
     {
@@ -1662,6 +1684,9 @@ static void dumptree(Node* n, bool recurse, int depth = 0, const char* title = N
                 break;
 
             case FOLDERNODE:
+                if (ordering)
+                    cout<< get_size(n) << ", ";
+
                 cout << "folder";
 
                 if (handles_on)
@@ -1728,9 +1753,12 @@ static void dumptree(Node* n, bool recurse, int depth = 0, const char* title = N
 
     if (n->type != FILENODE)
     {
-        for (node_list::iterator it = n->children.begin(); it != n->children.end(); it++)
+        std::vector<Node*> childlist (n->children.begin(), n->children.end());
+        if (ordering)
+            std::sort (childlist.begin(), childlist.end(), descending_size);
+        for (std::vector<Node*>::iterator it = childlist.begin(); it != childlist.end(); it++)
         {
-            dumptree(*it, recurse, depth + 1);
+            dumptree(*it, recurse, ordering, depth + 1);
         }
     }
 }
@@ -2492,7 +2520,7 @@ autocomplete::ACN autocompleteSyntax()
     p->Add(exec_confirm, sequence(text("confirm")));
     p->Add(exec_session, sequence(text("session"), opt(sequence(text("autoresume"), opt(param("id"))))));
     p->Add(exec_mount, sequence(text("mount")));
-    p->Add(exec_ls, sequence(text("ls"), opt(flag("-R")), opt(remoteFSFolder(client, &cwd))));
+    p->Add(exec_ls, sequence(text("ls"), opt(flag("-R")), opt(flag("-lS")), opt(remoteFSFolder(client, &cwd))));
     p->Add(exec_cd, sequence(text("cd"), opt(remoteFSFolder(client, &cwd))));
     p->Add(exec_pwd, sequence(text("pwd")));
     p->Add(exec_lcd, sequence(text("lcd"), opt(localFSFolder())));
@@ -2897,6 +2925,7 @@ void exec_ls(autocomplete::ACState& s)
 {
     Node* n;
     bool recursive = s.extractflag("-R");
+    bool ordering = s.extractflag("-lS");
 
     if (s.words.size() > 1)
     {
@@ -2909,7 +2938,7 @@ void exec_ls(autocomplete::ACState& s)
 
     if (n)
     {
-        dumptree(n, recursive);
+        dumptree(n, recursive, ordering);
     }
 }
 
